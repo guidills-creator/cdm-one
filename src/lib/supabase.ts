@@ -51,7 +51,7 @@ export async function ensurePropostasTableExists() {
       criancas int not null,
       "valorTotal" numeric not null,
       status text not null,
-      "criadoEm" text not null,
+      created_at timestamptz default now(),
       voos jsonb not null,
       hotel jsonb not null,
       passeios jsonb not null,

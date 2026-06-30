@@ -8,14 +8,19 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const codigo = url.searchParams.get("codigo");
-  const query = supabase.from("propostas").select("*").order("criadoEm", { ascending: false });
+  const query = supabase.from("propostas").select("*, created_at").order("created_at", { ascending: false });
   const { data, error } = codigo ? await query.eq("codigo", codigo.toUpperCase()) : await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data ?? []);
+  const mapped = (data ?? []).map((row: any) => ({
+    ...row,
+    criadoEm: row.criadoEm ?? row.created_at ?? row.createdAt ?? "",
+  }));
+
+  return NextResponse.json(mapped);
 }
 
 export async function POST(request: Request) {
@@ -49,7 +54,6 @@ export async function POST(request: Request) {
     criancas: Number(body.criancas),
     valorTotal: Number(body.valorTotal),
     status: body.status ?? "Em análise",
-    criadoEm: new Date().toISOString(),
     voos: [
       {
         cia: body.voos ? body.voos : "A definir",
@@ -82,10 +86,15 @@ export async function POST(request: Request) {
     observacoes: body.observacoes ?? "",
   };
 
-  const { data, error } = await supabase.from("propostas").insert([proposal]).select().single();
+  const { data, error } = await supabase.from("propostas").insert([proposal]).select("*, created_at").single();
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json(data, { status: 201 });
+  const mapped = {
+    ...data,
+    criadoEm: data?.criadoEm ?? data?.created_at ?? data?.createdAt ?? "",
+  };
+
+  return NextResponse.json(mapped, { status: 201 });
 }
