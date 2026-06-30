@@ -64,8 +64,7 @@ export default function NovaPropostaPage() {
       return;
     }
 
-    const proposal = await response.json();
-    router.push(`/proposta/${proposal.codigo.toUpperCase()}`);
+    router.push("/admin/propostas");
   };
 
   return (

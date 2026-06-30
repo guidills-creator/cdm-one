@@ -1,5 +1,22 @@
 import { NextResponse } from "next/server";
-import { supabase, ensurePropostasTableExists } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+
+export async function GET(request: Request) {
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase não está configurado." }, { status: 500 });
+  }
+
+  const url = new URL(request.url);
+  const codigo = url.searchParams.get("codigo");
+  const query = supabase.from("propostas").select("*").order("criadoEm", { ascending: false });
+  const { data, error } = codigo ? await query.eq("codigo", codigo.toUpperCase()) : await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data ?? []);
+}
 
 export async function POST(request: Request) {
   if (!supabase) {
@@ -67,10 +84,6 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase.from("propostas").insert([proposal]).select().single();
   if (error) {
-    if (error.message?.includes("relation \"propostas\" does not exist") || error.message?.includes("does not exist")) {
-      await ensurePropostasTableExists();
-    }
-
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

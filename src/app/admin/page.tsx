@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 
 const menuItems = [
   { label: "Dashboard", active: true },
@@ -11,14 +12,55 @@ const menuItems = [
   { label: "Configurações" },
 ];
 
-const metricCards = [
-  { title: "Clientes", value: "0", icon: "👥" },
-  { title: "Propostas", value: "0", icon: "📄" },
-  { title: "Pagamentos", value: "0", icon: "💰" },
-  { title: "Viagens", value: "0", icon: "✈️" },
-];
+type ProposalRow = {
+  id: string;
+  codigo: string;
+  cliente: { nome: string };
+  destino: string;
+  status: string;
+  valorTotal: number;
+  criadoEm: string;
+};
 
 export default function AdminPage() {
+  const [proposals, setProposals] = useState<ProposalRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProposals() {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/propostas");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || "Falha ao carregar propostas.");
+        setIsLoading(false);
+        return;
+      }
+
+      const data = (await response.json()) as ProposalRow[];
+      setProposals(data ?? []);
+      setIsLoading(false);
+    }
+
+    loadProposals();
+  }, []);
+
+  const metricCards = useMemo(() => {
+    const totalRevenue = proposals.reduce((sum, proposal) => sum + Number(proposal.valorTotal), 0);
+    const uniqueClients = new Set(proposals.map((proposal) => proposal.cliente.nome)).size;
+    const latestDate = proposals[0]?.criadoEm ?? "";
+
+    return [
+      { title: "Clientes", value: `${uniqueClients}`, icon: "👥" },
+      { title: "Propostas", value: `${proposals.length}`, icon: "📄" },
+      { title: "Receita", value: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalRevenue), icon: "💰" },
+      { title: "Última proposta", value: latestDate ? new Date(latestDate).toLocaleDateString("pt-BR") : "—", icon: "✈️" },
+    ];
+  }, [proposals]);
+
   return (
     <main className="min-h-screen bg-[linear-gradient(135deg,_#07111f_0%,_#0D2B52_45%,_#112f57_100%)] text-white">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col lg:flex-row">
@@ -47,9 +89,7 @@ export default function AdminPage() {
         <section className="flex-1 p-6 sm:p-8 lg:p-10">
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#F2D06B]">
-                Dashboard
-              </p>
+              <p className="text-sm font-semibold uppercase tracking-[0.35em] text-[#F2D06B]">Dashboard</p>
               <h1 className="mt-2 text-3xl font-semibold text-white">Visão geral da operação</h1>
             </div>
 
@@ -65,9 +105,7 @@ export default function AdminPage() {
             {metricCards.map((card) => (
               <div key={card.title} className="rounded-[24px] border border-white/10 bg-white/10 p-5 shadow-[0_15px_40px_rgba(0,0,0,0.2)] backdrop-blur-xl">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-300">
-                    {card.title}
-                  </p>
+                  <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-300">{card.title}</p>
                   <span className="text-2xl">{card.icon}</span>
                 </div>
                 <p className="mt-6 text-4xl font-semibold text-white">{card.value}</p>
@@ -94,30 +132,34 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b border-white/10">
-                    <td className="px-3 py-4 text-white">A7K9</td>
-                    <td className="px-3 py-4">Marina Andrade</td>
-                    <td className="px-3 py-4">Lisboa</td>
-                    <td className="px-3 py-4">Em análise</td>
-                    <td className="px-3 py-4">R$ 18.400</td>
-                    <td className="px-3 py-4">29/06/2026</td>
-                  </tr>
-                  <tr className="border-b border-white/10">
-                    <td className="px-3 py-4 text-white">B4T2</td>
-                    <td className="px-3 py-4">Carlos Mendes</td>
-                    <td className="px-3 py-4">Paris</td>
-                    <td className="px-3 py-4">Aprovada</td>
-                    <td className="px-3 py-4">R$ 24.900</td>
-                    <td className="px-3 py-4">27/06/2026</td>
-                  </tr>
-                  <tr>
-                    <td className="px-3 py-4 text-white">C1Q8</td>
-                    <td className="px-3 py-4">Helena Rocha</td>
-                    <td className="px-3 py-4">Dubai</td>
-                    <td className="px-3 py-4">Pendente</td>
-                    <td className="px-3 py-4">R$ 31.200</td>
-                    <td className="px-3 py-4">24/06/2026</td>
-                  </tr>
+                  {isLoading ? (
+                    <tr>
+                      <td className="px-3 py-4 text-center text-slate-400" colSpan={6}>
+                        Carregando propostas...
+                      </td>
+                    </tr>
+                  ) : error ? (
+                    <tr>
+                      <td className="px-3 py-4 text-center text-red-300" colSpan={6}>{error}</td>
+                    </tr>
+                  ) : proposals.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-4 text-center text-slate-400" colSpan={6}>
+                        Nenhuma proposta encontrada.
+                      </td>
+                    </tr>
+                  ) : (
+                    proposals.slice(0, 3).map((proposal) => (
+                      <tr key={proposal.id} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="px-3 py-4 text-white">{proposal.codigo}</td>
+                        <td className="px-3 py-4">{proposal.cliente.nome}</td>
+                        <td className="px-3 py-4">{proposal.destino}</td>
+                        <td className="px-3 py-4 text-[#C9A227]">{proposal.status}</td>
+                        <td className="px-3 py-4">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(proposal.valorTotal))}</td>
+                        <td className="px-3 py-4">{new Date(proposal.criadoEm).toLocaleDateString("pt-BR")}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
