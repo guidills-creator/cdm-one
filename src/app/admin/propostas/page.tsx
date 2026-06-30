@@ -1,21 +1,58 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { StatCard } from "@/components/admin/StatCard";
 
-const stats = [
-  { title: "Propostas", value: "24", subtitle: "Criadas no último mês", icon: "📄" },
-  { title: "Conversão", value: "82%", subtitle: "Taxa de fechamento", icon: "🚀" },
-  { title: "Receita", value: "R$ 124k", subtitle: "Potencial em pipeline", icon: "💰" },
-  { title: "Clientes", value: "98", subtitle: "Ativos no painel", icon: "👥" },
-];
-
-const proposals = [
-  { id: "A7K9", client: "Marina Andrade", destination: "Lisboa", status: "Em análise", amount: "R$ 18.400", date: "29/06/2026" },
-  { id: "B4T2", client: "Carlos Mendes", destination: "Paris", status: "Aprovada", amount: "R$ 24.900", date: "27/06/2026" },
-  { id: "C1Q8", client: "Helena Rocha", destination: "Dubai", status: "Pendente", amount: "R$ 31.200", date: "24/06/2026" },
-  { id: "D5F1", client: "Samuel Lima", destination: "Maldivas", status: "Confirmada", amount: "R$ 45.800", date: "22/06/2026" },
-];
+type ProposalRow = {
+  id: string;
+  codigo: string;
+  cliente: { nome: string };
+  destino: string;
+  status: string;
+  valorTotal: number;
+  criadoEm: string;
+};
 
 export default function PropostasPage() {
+  const [proposals, setProposals] = useState<ProposalRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProposals() {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch("/api/propostas");
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data.error || "Falha ao carregar propostas.");
+        setIsLoading(false);
+        return;
+      }
+
+      const data = (await response.json()) as ProposalRow[];
+      setProposals(data ?? []);
+      setIsLoading(false);
+    }
+
+    loadProposals();
+  }, []);
+
+  const stats = useMemo(() => {
+    const totalRevenue = proposals.reduce((sum, proposal) => sum + Number(proposal.valorTotal), 0);
+    const uniqueClients = new Set(proposals.map((proposal) => proposal.cliente.nome)).size;
+    const latestDate = proposals[0]?.criadoEm ?? "";
+
+    return [
+      { title: "Propostas", value: `${proposals.length}`, subtitle: "Registros no banco", icon: "📄" },
+      { title: "Receita", value: new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(totalRevenue), subtitle: "Potencial total", icon: "💰" },
+      { title: "Clientes", value: `${uniqueClients}`, subtitle: "Clientes ativos", icon: "👥" },
+      { title: "Última proposta", value: latestDate ? new Date(latestDate).toLocaleDateString("pt-BR") : "—", subtitle: "Mais recente", icon: "🕒" },
+    ];
+  }, [proposals]);
+
   return (
     <div className="p-6 sm:p-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -67,16 +104,34 @@ export default function PropostasPage() {
               </tr>
             </thead>
             <tbody>
-              {proposals.map((proposal) => (
-                <tr key={proposal.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="px-4 py-4 font-medium text-white">{proposal.id}</td>
-                  <td className="px-4 py-4">{proposal.client}</td>
-                  <td className="px-4 py-4">{proposal.destination}</td>
-                  <td className="px-4 py-4 text-[#C9A227]">{proposal.status}</td>
-                  <td className="px-4 py-4">{proposal.amount}</td>
-                  <td className="px-4 py-4">{proposal.date}</td>
+              {isLoading ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-slate-400" colSpan={6}>
+                    Carregando propostas...
+                  </td>
                 </tr>
-              ))}
+              ) : error ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-red-300" colSpan={6}>{error}</td>
+                </tr>
+              ) : proposals.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-8 text-center text-slate-400" colSpan={6}>
+                    Nenhuma proposta encontrada.
+                  </td>
+                </tr>
+              ) : (
+                proposals.map((proposal) => (
+                  <tr key={proposal.id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="px-4 py-4 font-medium text-white">{proposal.codigo}</td>
+                    <td className="px-4 py-4">{proposal.cliente.nome}</td>
+                    <td className="px-4 py-4">{proposal.destino}</td>
+                    <td className="px-4 py-4 text-[#C9A227]">{proposal.status}</td>
+                    <td className="px-4 py-4">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(proposal.valorTotal)}</td>
+                    <td className="px-4 py-4">{new Date(proposal.criadoEm).toLocaleDateString("pt-BR")}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

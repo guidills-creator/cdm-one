@@ -24,12 +24,27 @@ export default function PropostaPage({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    async function loadProposal() {
       setIsLoading(true);
-      const loadedProposal = getProposalByCode(codigo.toUpperCase());
-      setProposal(loadedProposal);
+      const response = await fetch(`/api/propostas?codigo=${codigo.toUpperCase()}`);
+      if (response.ok) {
+        const data = (await response.json()) as Proposta[];
+        if (Array.isArray(data) && data.length > 0) {
+          setProposal(data[0]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        const loadedProposal = getProposalByCode(codigo.toUpperCase());
+        setProposal(loadedProposal);
+      }
+
       setIsLoading(false);
     }
+
+    loadProposal();
   }, [codigo]);
 
   const formattedValue = useMemo(() => {
