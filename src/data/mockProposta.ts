@@ -18,7 +18,7 @@ export const mockProposta: Proposta = {
   criancas: 0,
   valorTotal: 18400,
   status: "Em análise",
-  criadoEm: "2026-06-29T10:00:00.000Z",
+  created_at: "2026-06-29T10:00:00.000Z",
   voos: [
     {
       cia: "LATAM",

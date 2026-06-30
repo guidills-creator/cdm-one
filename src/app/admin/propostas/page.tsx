@@ -11,7 +11,7 @@ type ProposalRow = {
   destino: string;
   status: string;
   valorTotal: number;
-  criadoEm: string;
+  created_at: string;
 };
 
 export default function PropostasPage() {
@@ -43,7 +43,7 @@ export default function PropostasPage() {
   const stats = useMemo(() => {
     const totalRevenue = proposals.reduce((sum, proposal) => sum + Number(proposal.valorTotal), 0);
     const uniqueClients = new Set(proposals.map((proposal) => proposal.cliente.nome)).size;
-    const latestDate = proposals[0]?.criadoEm ?? "";
+    const latestDate = proposals[0]?.created_at ?? "";
 
     return [
       { title: "Propostas", value: `${proposals.length}`, subtitle: "Registros no banco", icon: "📄" },
@@ -128,7 +128,7 @@ export default function PropostasPage() {
                     <td className="px-4 py-4">{proposal.destino}</td>
                     <td className="px-4 py-4 text-[#C9A227]">{proposal.status}</td>
                     <td className="px-4 py-4">{new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(proposal.valorTotal)}</td>
-                    <td className="px-4 py-4">{new Date(proposal.criadoEm).toLocaleDateString("pt-BR")}</td>
+                    <td className="px-4 py-4">{new Date(proposal.created_at).toLocaleDateString("pt-BR")}</td>
                   </tr>
                 ))
               )}

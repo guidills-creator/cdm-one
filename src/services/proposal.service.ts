@@ -73,7 +73,7 @@ export function createProposal(draft: ProposalDraft): Proposta {
     criancas: draft.criancas,
     valorTotal: draft.valorTotal,
     status: "Em análise",
-    criadoEm: new Date().toISOString(),
+    created_at: new Date().toISOString(),
     voos: [
       {
         cia: "A definir",

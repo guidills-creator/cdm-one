@@ -11,5 +11,5 @@ export interface Proposal {
   criancas: number;
   valorTotal: number;
   status: string;
-  criadoEm: string;
+  created_at: string;
 }

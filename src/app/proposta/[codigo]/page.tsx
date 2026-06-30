@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { BRAND } from "../../../lib/constants";
-import { getProposalByCode } from "../../../services/proposal.service";
 import type { Proposta } from "../../../types/proposta";
 
 const cards = [
@@ -36,11 +35,7 @@ export default function PropostaPage({
         }
       }
 
-      if (typeof window !== "undefined") {
-        const loadedProposal = getProposalByCode(codigo.toUpperCase());
-        setProposal(loadedProposal);
-      }
-
+      setProposal(null);
       setIsLoading(false);
     }
 
@@ -117,7 +112,7 @@ export default function PropostaPage({
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Data de emissão</p>
-                  <p className="mt-2 font-semibold text-[#0B2341]">{proposal.criadoEm.slice(0, 10)}</p>
+                  <p className="mt-2 font-semibold text-[#0B2341]">{proposal.created_at.slice(0, 10)}</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Status</p>

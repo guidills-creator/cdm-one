@@ -14,7 +14,7 @@ export interface Proposta {
   criancas: number;
   valorTotal: number;
   status: string;
-  criadoEm: string;
+  created_at: string;
   voos: Flight[];
   hotel: Hotel;
   passeios: Tour[];

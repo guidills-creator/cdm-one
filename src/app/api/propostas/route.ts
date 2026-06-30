@@ -15,12 +15,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const mapped = (data ?? []).map((row: any) => ({
-    ...row,
-    criadoEm: row.criadoEm ?? row.created_at ?? row.createdAt ?? "",
-  }));
-
-  return NextResponse.json(mapped);
+  return NextResponse.json(data ?? []);
 }
 
 export async function POST(request: Request) {
@@ -91,10 +86,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const mapped = {
-    ...data,
-    criadoEm: data?.criadoEm ?? data?.created_at ?? data?.createdAt ?? "",
-  };
-
-  return NextResponse.json(mapped, { status: 201 });
+  return NextResponse.json(data ?? null, { status: 201 });
 }
